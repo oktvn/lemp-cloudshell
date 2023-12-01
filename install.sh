@@ -76,8 +76,8 @@ if [ "$1" == "--first-run" ]; then
     sed -i "s/{{ password }}/1/" /home/$(whoami)/www/admin/view/template/common/login.twig
     # Moving storage folder out of www and redefining it in both configs to get rid of the annoying pop-up
     cp -r /home/$(whoami)/www/system/storage/ /home/$(whoami)/
-    sed -i "s/define('DIR_STORAGE', DIR_SYSTEM . 'storage/')/define('DIR_STORAGE', '/home/$(whoami)/www/storage/')/" /home/$(whoami)/www/admin/config.php
-    sed -i "s/define('DIR_STORAGE', DIR_SYSTEM . 'storage/')/define('DIR_STORAGE', '/home/$(whoami)/www/storage/')/" /home/$(whoami)/www/config.php
+    sed -i "s#define('DIR_STORAGE', DIR_SYSTEM . 'storage/')#define('DIR_STORAGE', '/home/$(whoami)/storage/')#" /home/$(whoami)/www/admin/config.php
+    sed -i "s#define('DIR_STORAGE', DIR_SYSTEM . 'storage/')#define('DIR_STORAGE', '/home/$(whoami)/storage/')#" /home/$(whoami)/www/config.php
 fi
 
 echo "Installing PhpMyAdmin..."
