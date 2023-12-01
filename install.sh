@@ -59,19 +59,34 @@ sudo mysqladmin -u root password 'newpass'
 
 
 if [ "$1" == "--first-run" ]; then
-    sudo mysqladmin -uroot -pnewpass create opencart
-    cd `mktemp -d`
-    echo "Installing OpenCart..."
-    {
-    wget https://github.com/opencart/opencart/releases/download/3.0.3.9/opencart-3.0.3.9.zip
-    unzip *
     rm -rf /home/$(whoami)/storage
     rm -rf /home/$(whoami)/www/*
+    sudo mysqladmin -uroot -pnewpass create opencart
+    echo "Installing OpenCart..."
+    {
+    cd `mktemp -d`
+    wget https://github.com/opencart/opencart/releases/download/3.0.3.9/opencart-3.0.3.9.zip
+    unzip *
     mv upload/* /home/$(whoami)/www/
     }&> /dev/null
     php /home/$(whoami)/www/install/cli_install.php install --db_hostname localhost --db_username root --db_password newpass --db_database opencart --db_driver mysqli --db_port 3306 --username admin --password 1 --email youremail@example.com --http_server https://8080-$WEB_HOST/
     rm -rf /home/$(whoami)/www/install
 fi
+
+echo "Installing PhpMyAdmin..."
+{
+cd `mktemp -d`
+wget https://files.phpmyadmin.net/phpMyAdmin/4.9.11/phpMyAdmin-4.9.11-english.zip
+unzip *
+rm *.zip
+sudo mkdir -p /home/$(whoami)/www/pma
+mv * /home/$(whoami)/www/pma
+mv /home/$(whoami)/www/pma/config.sample.inc.php /home/$(whoami)/www/pma/config.inc.php
+sudo sed -i "s/'cookie'/'config'/" /home/$(whoami)/www/pma/config.inc.php
+sudo sed -i "s/'compress'] = false;/'user'] = 'root';/" /home/$(whoami)/www/pma/config.inc.php
+sudo sed -i "s/'AllowNoPassword'] = false;/'password'] = 'newpass';/" /home/$(whoami)/www/pma/config.inc.php
+}&> /dev/null
+
 
 
 sudo service php7.4-fpm restart && sudo service nginx restart  && sudo service mariadb restart
