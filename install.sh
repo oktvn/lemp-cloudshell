@@ -70,14 +70,20 @@ if [ "$1" == "--first-run" ]; then
     mv upload/* /home/$(whoami)/www/
     }&> /dev/null
     php /home/$(whoami)/www/install/cli_install.php install --db_hostname localhost --db_username root --db_password newpass --db_database opencart --db_driver mysqli --db_port 3306 --username admin --password 1 --email youremail@example.com --http_server https://8080-$WEB_HOST/
-    rm -rf /home/$(whoami)/www/install
+
     # Pre-filling admin login form
     sed -i "s/{{ username }}/admin/" /home/$(whoami)/www/admin/view/template/common/login.twig
     sed -i "s/{{ password }}/1/" /home/$(whoami)/www/admin/view/template/common/login.twig
+    
     # Moving storage folder out of www and redefining it in both configs to get rid of the annoying pop-up
     cp -r /home/$(whoami)/www/system/storage/ /home/$(whoami)/
     sed -i "s#define('DIR_STORAGE', DIR_SYSTEM . 'storage/')#define('DIR_STORAGE', '/home/$(whoami)/storage/')#" /home/$(whoami)/www/admin/config.php
     sed -i "s#define('DIR_STORAGE', DIR_SYSTEM . 'storage/')#define('DIR_STORAGE', '/home/$(whoami)/storage/')#" /home/$(whoami)/www/config.php
+
+    #Clean-up
+    rm -rf /home/$(whoami)/www/install
+    rm -rf /home/$(whoami)/www/config-dist.php
+    rm -rf /home/$(whoami)/www/admin/config-dist.php    
 fi
 
 echo "Installing PhpMyAdmin..."
