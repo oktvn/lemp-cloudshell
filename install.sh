@@ -79,15 +79,17 @@ cd `mktemp -d`
 wget https://files.phpmyadmin.net/phpMyAdmin/4.9.11/phpMyAdmin-4.9.11-english.zip
 unzip *
 rm *.zip
-sudo mkdir -p /home/$(whoami)/www/pma
-mv * /home/$(whoami)/www/pma
+mkdir -p /home/$(whoami)/www/pma
+mv */* /home/$(whoami)/www/pma
 mv /home/$(whoami)/www/pma/config.sample.inc.php /home/$(whoami)/www/pma/config.inc.php
-sudo sed -i "s/'cookie'/'config'/" /home/$(whoami)/www/pma/config.inc.php
-sudo sed -i "s/'compress'] = false;/'user'] = 'root';/" /home/$(whoami)/www/pma/config.inc.php
-sudo sed -i "s/'AllowNoPassword'] = false;/'password'] = 'newpass';/" /home/$(whoami)/www/pma/config.inc.php
+sed -i "s/'cookie'/'config'/" /home/$(whoami)/www/pma/config.inc.php
+sed -i "s/'compress'] = false;/'user'] = 'root';/" /home/$(whoami)/www/pma/config.inc.php
+sed -i "s/'AllowNoPassword'] = false;/'password'] = 'newpass';/" /home/$(whoami)/www/pma/config.inc.php
 }&> /dev/null
 
 
-
-sudo service php7.4-fpm restart && sudo service nginx restart  && sudo service mariadb restart
+echo "Restarting LEMP..."
+{
+sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
+}&> /dev/null
 
