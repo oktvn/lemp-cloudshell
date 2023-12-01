@@ -43,6 +43,7 @@ echo "Configuring MariaDB..."
 {
 sudo service mariadb stop
 sudo mkdir -p /run/mysqld
+sudo chown mysql:mysql /run/mysqld/
 if [ ! -d "/home/$(whoami)/mysql" ] || [ "$1" == "--first-run" ]; then
     mkdir -p /home/$(whoami)/mysql
     sudo mysql_install_db --datadir=/home/$(whoami)/mysql
