@@ -1,0 +1,73 @@
+#!/bin/bash
+
+username=$(basename "$PWD")
+
+rm /etc/profile.d/init_help.sh
+
+echo "Installing PHP FPM 7.4 and extensions..."
+{
+sudo apt update;  sudo apt install -y nginx php7.4-fpm php7.4-curl php7.4-zip php7.4-gd php7.4-pgsql
+}&> /dev/null
+
+echo "Configuring PHP 7.4..."
+{
+sudo sed -i "s/www-data/$username/" /etc/php/7.4/fpm/pool.d/www.conf 
+sudo mkdir -p /run/php
+}&> /dev/null
+
+
+echo "Installing Nginx..."
+{
+sudo apt install -y nginx 
+}&> /dev/null
+
+echo "Configuring Nginx..."
+{
+cd `mktemp -d`
+wget https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/default.nginx.conf
+sudo cp ./default.nginx.conf /etc/nginx/sites-enabled/default
+sudo sed -i "s#root /var/www/html;#root /home/$username/www;#" /etc/nginx/sites-enabled/default
+sudo sed -i "s/user www-data;/user $username;/" /etc/nginx/nginx.conf
+mkdir -p /home/$username/www
+if [ ! -d "/home/$username/www" ]; then
+    cp -R /var/www/html/. "$destination"
+    echo "Copied contents from /var/www/html/ to $destination"
+else
+    echo "$destination already exists. Skipping copy."
+fi
+}&> /dev/null
+
+
+echo "Installing MariaDB..."
+{
+# We might need to remove some legacy packages
+# We might need to point the storage to the home folder
+sudo apt install -y mariadb-server
+}&> /dev/null
+
+echo "Configuring MariaDB..."
+{
+sudo service mariadb stop
+sudo mkdir -p /run/mysqld
+sudo chown mysql:mysql /run/mysqld/
+if [ ! -d "/home/$username/mysql" ]; then
+    mkdir -p /home/$username/mysql
+    sudo mysql_install_db --datadir=/home/$username/mysql
+    echo "Created new MySQL datadir in /home/$username"
+else
+    echo "MySQL datadir already exists in /home/$username. Leaving as-is."
+fi
+sudo sed -i "s#/var/lib/mysql#/home/$username/mysql#" /etc/mysql/mariadb.conf.d/50-server.cnf
+sudo service mariadb start
+sudo mysqladmin -u root password 'newpass'
+}
+
+echo "Restarting LEMP..."
+{
+sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
+}&> /dev/null
+
+
+sudo chown -R $username:$username /home/$username
+
+exit 0  # Exit with code 0 for success
