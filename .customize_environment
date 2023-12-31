@@ -78,10 +78,18 @@ echo "Restarting LEMP..."
 sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
 }&> /dev/null
 
-echo '<?php phpinfo();' > /home/$username/www/index.php
+if [ -f "/home/$username/www/index.php" ]; then
+    echo "/home/$username/www/index.php already exists. Creating /home/$username/www/info.php..."
+    echo '<?php phpinfo();' > /home/$username/www/info.php
+else
+    echo "Creating /home/$username/www/index.php..."
+    echo '<?php phpinfo();' > /home/$username/www/index.php
+fi
 
 echo "Setting permissions..."
 
 sudo chown -R $username:$username /home/$username
+
+sudo chown -R mysql:mysql /home/$username/mysql
 
 exit 0  # Exit with code 0 for success
