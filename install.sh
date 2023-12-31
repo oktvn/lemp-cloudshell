@@ -56,7 +56,15 @@ sudo service mariadb start
 sudo mysqladmin -u root password 'newpass'
 }
 
+echo "Installing MailCatcher..."
+{
+gem install mailcatcher --no-document
+}&> /dev/null
 
+echo "Starting MailCatcher on :8888..."
+{
+mailcatcher --http-port=8888
+}
 
 if [ "$1" == "--first-run" ]; then
     rm -rf /home/$(whoami)/storage
