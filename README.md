@@ -11,3 +11,8 @@ Reinstall LEMP without overwriting your work (e.g. after the workspace expired):
 
 
     cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash install.sh
+
+
+Reinstall Opencart + phpMyAdmin
+
+    cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash install-oc.sh
