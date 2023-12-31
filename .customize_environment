@@ -50,7 +50,7 @@ echo "Configuring MariaDB..."
 sudo service mariadb stop
 sudo mkdir -p /run/mysqld
 sudo chown mysql:mysql /run/mysqld/
-if [ ! -d "/home/$username/mysql" ]; then
+if [ ! -d "/home/$username/mysql" ] || [ "$1" == "--first-run" ]; then
     mkdir -p /home/$username/mysql
     sudo mysql_install_db --datadir=/home/$username/mysql
     echo "Created new MySQL datadir in /home/$username"
@@ -62,11 +62,24 @@ sudo service mariadb start
 sudo mysqladmin -u root password 'newpass'
 }
 
+echo "Installing MailCatcher..."
+{
+gem install mailcatcher --no-document
+}&> /dev/null
+
+echo "Starting MailCatcher on :8888..."
+{
+mailcatcher --http-port=8888
+}
+
 echo "Restarting LEMP..."
 {
 sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
 }&> /dev/null
 
+echo '<?php phpinfo();' > /home/$username/www/index.php
+
+echo "Setting permissions..."
 
 sudo chown -R $username:$username /home/$username
 
