@@ -89,7 +89,7 @@ fi
 echo "Installing PhpMyAdmin..."
 {
 cd `mktemp -d`
-wget https://files.phpmyadmin.net/phpMyAdmin/4.9.11/phpMyAdmin-4.9.11-english.zip
+wget --no-check-certificate https://files.phpmyadmin.net/phpMyAdmin/4.9.11/phpMyAdmin-4.9.11-english.zip
 unzip *
 rm *.zip
 mkdir -p /home/$(whoami)/www/pma
