@@ -12,6 +12,7 @@ sudo apt update;  sudo apt install -y nginx php7.4-fpm php7.4-curl php7.4-zip ph
 echo "Configuring PHP 7.4..."
 {
 sudo sed -i "s/www-data/$username/" /etc/php/7.4/fpm/pool.d/www.conf 
+sudo rm -rf /etc/php/7.4/cli/conf.d/20-protobuf.ini
 sudo mkdir -p /run/php
 }&> /dev/null
 
