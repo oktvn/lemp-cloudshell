@@ -2,7 +2,8 @@
 
 rm -rf /home/$(whoami)/storage
 rm -rf /home/$(whoami)/www/*
-sudo mysqladmin -uroot -pnewpass create opencart
+sudo mysql -uroot -pnewpass -e "DROP DATABASE IF EXISTS opencart"
+sudo mysql -uroot -pnewpass -e "CREATE DATABASE opencart"
 echo "Installing OpenCart..."
 {
 cd `mktemp -d`
@@ -10,6 +11,13 @@ wget https://github.com/opencart/opencart/releases/download/3.0.3.9/opencart-3.0
 unzip *
 mv upload/* /home/$(whoami)/www/
 }&> /dev/null
+
+# Modify install SQL. Change line `'config_mail_engine', 'mail'` to `'config_mail_engine', 'smtp' in /home/$(whoami)/www/install/opencart.sql
+sed -i "s/'config_mail_engine', 'mail'/'config_mail_engine', 'smtp'/" /home/$(whoami)/www/install/opencart.sql
+sed -i "s/'config_mail_smtp_hostname', ''/'config_mail_smtp_hostname', '127.0.0.1'/" /home/$(whoami)/www/install/opencart.sql
+sed -i "s/'config_mail_smtp_port', '25'/'config_mail_smtp_port', '1025'/" /home/$(whoami)/www/install/opencart.sql
+
+
 php /home/$(whoami)/www/install/cli_install.php install --db_hostname localhost --db_username root --db_password newpass --db_database opencart --db_driver mysqli --db_port 3306 --username admin --password 1 --email youremail@example.com --http_server https://8080-$WEB_HOST/
 
 # Pre-filling admin login form
