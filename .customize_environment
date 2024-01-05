@@ -1,12 +1,11 @@
 #!/bin/bash
 
 username=$(basename "$PWD")
-
-rm /etc/profile.d/init_help.sh
+destination="/home/$username"
 
 echo "Installing PHP FPM 7.4 and extensions..."
 {
-sudo apt update;  sudo apt install -y nginx php7.4-fpm php7.4-curl php7.4-zip php7.4-gd php7.4-pgsql
+sudo apt update;  sudo apt install -y php7.4-fpm php7.4-curl php7.4-zip php7.4-gd php7.4-mysqli php7.4-pgsql
 }&> /dev/null
 
 echo "Configuring PHP 7.4..."
@@ -27,10 +26,10 @@ echo "Configuring Nginx..."
 cd `mktemp -d`
 wget https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/default.nginx.conf
 sudo cp ./default.nginx.conf /etc/nginx/sites-enabled/default
-sudo sed -i "s#root /var/www/html;#root /home/$username/www;#" /etc/nginx/sites-enabled/default
+sudo sed -i "s#root /var/www/html;#root $destination/www;#" /etc/nginx/sites-enabled/default
 sudo sed -i "s/user www-data;/user $username;/" /etc/nginx/nginx.conf
-mkdir -p /home/$username/www
-if [ ! -d "/home/$username/www" ]; then
+mkdir -p $destination/www
+if [ ! -d "$destination/www" ]; then
     cp -R /var/www/html/. "$destination"
     echo "Copied contents from /var/www/html/ to $destination"
 else
@@ -51,25 +50,26 @@ echo "Configuring MariaDB..."
 sudo service mariadb stop
 sudo mkdir -p /run/mysqld
 sudo chown mysql:mysql /run/mysqld/
-if [ ! -d "/home/$username/mysql" ] || [ "$1" == "--first-run" ]; then
-    mkdir -p /home/$username/mysql
-    sudo mysql_install_db --datadir=/home/$username/mysql
-    echo "Created new MySQL datadir in /home/$username"
+if [ ! -d "$destination/mysql" ] || [ "$1" == "--first-run" ]; then
+    mkdir -p $destination/mysql
+    sudo mysql_install_db --datadir=$destination/mysql
+    echo "Created new MySQL datadir in $destination"
 else
-    echo "MySQL datadir already exists in /home/$username. Leaving as-is."
+    echo "MySQL datadir already exists in $destination. Leaving as-is."
 fi
-sudo sed -i "s#/var/lib/mysql#/home/$username/mysql#" /etc/mysql/mariadb.conf.d/50-server.cnf
+sudo sed -i "s#/var/lib/mysql#$destination/mysql#" /etc/mysql/mariadb.conf.d/50-server.cnf
 sudo service mariadb start
 sudo mysqladmin -u root password 'newpass'
 }
 
 echo "Installing MailCatcher..."
 {
-gem install mailcatcher --no-document
+sudo gem install mailcatcher --no-document --force
 }&> /dev/null
 
 echo "Starting MailCatcher on :8888..."
 {
+sudo killall mailcatcher
 mailcatcher --http-port=8888
 }
 
@@ -78,18 +78,18 @@ echo "Restarting LEMP..."
 sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
 }&> /dev/null
 
-if [ -f "/home/$username/www/index.php" ]; then
-    echo "/home/$username/www/index.php already exists. Creating /home/$username/www/info.php..."
-    echo '<?php phpinfo();' > /home/$username/www/info.php
+if [ -f "$destination/www/index.php" ]; then
+    echo "$destination/www/index.php already exists. Creating $destination/www/info.php..."
+    echo '<?php phpinfo();' > $destination/www/info.php
 else
-    echo "Creating /home/$username/www/index.php..."
-    echo '<?php phpinfo();' > /home/$username/www/index.php
+    echo "Creating $destination/www/index.php..."
+    echo '<?php phpinfo();' > $destination/www/index.php
 fi
 
 echo "Setting permissions..."
 
-sudo chown -R $username:$username /home/$username
+sudo chown -R $username:$username $destination
 
-sudo chown -R mysql:mysql /home/$username/mysql
+sudo chown -R mysql:mysql $destination/mysql
 
 exit 0  # Exit with code 0 for success
