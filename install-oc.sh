@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ $EUID -eq 0 ]]; then
+   echo "This script must be run as a non-root user" 
+   exit 1
+fi
+
 rm -rf /home/$(whoami)/storage
 rm -rf /home/$(whoami)/www/*
 sudo mysql -uroot -pnewpass -e "DROP DATABASE IF EXISTS opencart"
@@ -18,7 +23,7 @@ sed -i "s/'config_mail_smtp_hostname', ''/'config_mail_smtp_hostname', '127.0.0.
 sed -i "s/'config_mail_smtp_port', '25'/'config_mail_smtp_port', '1025'/" /home/$(whoami)/www/install/opencart.sql
 
 
-php /home/$(whoami)/www/install/cli_install.php install --db_hostname localhost --db_username root --db_password newpass --db_database opencart --db_driver mysqli --db_port 3306 --username admin --password 1 --email youremail@example.com --http_server https://8080-$WEB_HOST/
+php /home/$(whoami)/www/install/cli_install.php install --db_hostname localhost --db_username root --db_password newpass --db_database opencart --db_driver mysqli --db_port 3306 --username admin --password 1 --email youremail@example.com --http_server "https://8080-' . getenv('WEB_HOST') . '/"
 
 # Pre-filling admin login form
 sed -i "s/{{ username }}/admin/" /home/$(whoami)/www/admin/view/template/common/login.twig
@@ -46,10 +51,4 @@ mv /home/$(whoami)/www/pma/config.sample.inc.php /home/$(whoami)/www/pma/config.
 sed -i "s/'cookie'/'config'/" /home/$(whoami)/www/pma/config.inc.php
 sed -i "s/'compress'] = false;/'user'] = 'root';/" /home/$(whoami)/www/pma/config.inc.php
 sed -i "s/'AllowNoPassword'] = false;/'password'] = 'newpass';/" /home/$(whoami)/www/pma/config.inc.php
-}&> /dev/null
-
-
-echo "Restarting LEMP..."
-{
-sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
 }&> /dev/null
