@@ -16,6 +16,34 @@ sudo mkdir -p /run/php
 }&> /dev/null
 
 
+echo "Adding environment variabled to php7.4-fpm init.d script..."
+{
+service_script="/etc/init.d/php7.4-fpm"  # Path to the service script
+
+# Check if the service script exists
+if [ ! -f "$service_script" ]; then
+    echo "Service script '$service_script' not found."
+    exit 1
+fi
+
+# Create a temporary file to store modified service script content
+tmp_file=$(mktemp)
+
+# Add environment variables from /etc/environment at the beginning of the service script
+echo '# Load environment variables from /etc/environment' > "$tmp_file"
+echo 'if [ -f /etc/environment ]; then' >> "$tmp_file"
+echo '    . /etc/environment' >> "$tmp_file"
+echo '    export $(cut -d= -f1 /etc/environment)' >> "$tmp_file"
+echo 'fi' >> "$tmp_file"
+cat "$service_script" >> "$tmp_file"
+
+# Overwrite the original service script with the modified content
+sudo mv "$tmp_file" "$service_script"
+sudo chmod +x "$service_script"
+
+echo "Environment variables prepended to $service_script script."
+}
+
 echo "Installing Nginx..."
 {
 sudo apt install -y nginx 
