@@ -23,12 +23,13 @@ cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git 
 
 ## What you get post-install
 
+* A convenient `www` directory in your home directory for your web applications.
 * On port `8080` you get Opencart on `/`
   * Pre-filled admin login details
 * On port `8080` you get phpMyAdmin on `/pma`
   * Auto-login with mysql `root` user
 * On port `8888` you get MailCatcher
-* Opencart already pre-configured to use MailCatcher
+* PHP already pre-configured to use MailCatcher
 
 ## Notes
 
