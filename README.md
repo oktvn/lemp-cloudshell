@@ -1,18 +1,26 @@
 # lemp-opencart-cloudshell
 Create a new OpenCart instance on Google Cloud Shell from scratch.
 
-# Usage
-First run:
+## What is this?
 
+Google offers a free VM called 'Google Cloud Shell' aimed at managing cloud infrastructure via the included `gcloud` utility, and also for testing and running various scripts. The terms of usage however don't prohibit usage outside of this scenario.
 
-    cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash install.sh --first-run
+The `.customize_environment` file is the centerpiece here, and it's essentially a script that runs at instance creation, or whenever it 'wakes up' from hibernation. Only the user home directory contents persist, as such this moves the `www` root into the user's home directory, as well as the `mysql` data directory. It installs the LEMP stack: `nginx`, `mysql` and `php8`, and additionally, the phpMyAdmin and OpenCart PHP applications.
 
-Reinstall LEMP without overwriting your work (e.g. after the workspace expired):
+## Usage
 
+You can just copy paste the following one-liner commands to either:
 
-    cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash install.sh
+* Install a clean LEMP stack without any applications in the `www` root:
 
+```
+cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash .customize_environment
+```
+* Install a clean LEMP stack + Opencart + phpMyAdmin
+```
+cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash .customize_environment; bash install-oc.sh
+```
 
-Reinstall Opencart + phpMyAdmin
+## Notes
 
-    cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash install-oc.sh
+Recommended for development work only. Please don't use this on any live environment of any kind. 
