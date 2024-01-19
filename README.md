@@ -1,4 +1,4 @@
-# lemp-opencart-cloudshell
+# LEMP + Opencart + phpMyAdmin for Google Cloud Shell
 Create a new OpenCart instance on Google Cloud Shell from scratch.
 
 ## What is this?
@@ -23,4 +23,6 @@ cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git 
 
 ## Notes
 
-Recommended for development work only. Please don't use this on any live environment of any kind. 
+* As long as you don't delete the `.customize_environment` file in your home directory, you don't have to re-run the first initialization script yourself again.
+* Works very well with my other project, if you're an extension developer or want to rapidly iterate on your existing projects on Opencart: [Extension Directory for Opencart 3.x](https://github.com/oktvn/opencart3-extension-directory)
+* Recommended for development work only. Please don't use this on any live environment of any kind. 
