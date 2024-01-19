@@ -76,6 +76,16 @@ echo "Installing MailCatcher..."
 sudo gem install mailcatcher --no-document --force
 }&> /dev/null
 
+echo "Configuring PHP for MailCatcher..."
+{
+sudo sed -i "s/smtp_port = 25/smtp_port = 1025/" /etc/php/8.2/fpm/php.ini
+sudo sed -i "s/;sendmail_path =/sendmail_path = $(which catchmail)/" /etc/php/8.2/fpm/php.ini
+sudo sed -i "s#;sendmail_path =#sendmail_path = $(which catchmail)#" /etc/php/8.2/fpm/php.ini
+sudo sed -i "s/smtp_port = 25/smtp_port = 1025/" /etc/php/8.2/cli/php.ini
+sudo sed -i "s/;sendmail_path =/sendmail_path = $(which catchmail)/" /etc/php/8.2/cli/php.ini
+sudo sed -i "s#;sendmail_path =#sendmail_path = $(which catchmail)#" /etc/php/8.2/cli/php.ini
+}&> /dev/null
+
 echo "Starting MailCatcher on https://8888-$WEB_HOST/..."
 {
 sudo killall mailcatcher
