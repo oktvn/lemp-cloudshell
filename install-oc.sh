@@ -46,7 +46,7 @@ rm -rf /home/$(whoami)/www/config-dist.php
 rm -rf /home/$(whoami)/www/admin/config-dist.php    
 
 
-echo "Installing PhpMyAdmin for PHP 8..."
+echo "Installing PhpMyAdmin for PHP 8 at https://8080-$WEB_HOST/pma/..."
 {
 cd `mktemp -d`
 wget --no-check-certificate "https://files.phpmyadmin.net/phpMyAdmin/5.2.1/phpMyAdmin-5.2.1-english.zip"
