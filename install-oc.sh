@@ -1,4 +1,5 @@
 #!/bin/bash
+source /etc/environment
 
 if [[ $EUID -eq 0 ]]; then
    echo "This script must be run as a non-root user" 
