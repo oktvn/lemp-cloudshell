@@ -21,10 +21,7 @@ unzip *
 find $PWD -maxdepth 2 -type d -name 'upload' -exec sh -c 'cp -r "{}"/* /home/$(whoami)/www/' \;
 }&> /dev/null
 
-# Modify install SQL. Change line `'config_mail_engine', 'mail'` to `'config_mail_engine', 'smtp' in /home/$(whoami)/www/install/opencart.sql
-sed -i "s/'config_mail_engine', 'mail'/'config_mail_engine', 'smtp'/" /home/$(whoami)/www/install/opencart.sql
-sed -i "s/'config_mail_smtp_hostname', ''/'config_mail_smtp_hostname', '127.0.0.1'/" /home/$(whoami)/www/install/opencart.sql
-sed -i "s/'config_mail_smtp_port', '25'/'config_mail_smtp_port', '1025'/" /home/$(whoami)/www/install/opencart.sql
+# Turn on SEO URLs
 sed -i "s/'config_seo_url', '0'/'config_seo_url', '1'/" /home/$(whoami)/www/install/opencart.sql
 
 mv /home/$(whoami)/www/config-dist.php /home/$(whoami)/www/config.php 
