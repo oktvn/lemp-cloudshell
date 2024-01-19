@@ -41,7 +41,8 @@ sed -i 's/name="password" value=""/name="password" value="password1"/' /home/$(w
 sed -i 's/public function index() {/public function index() { return;/' /home/$(whoami)/www/admin/controller/common/security.php
 
 #Clean-up
-rm -rf /home/$(whoami)/www/install
+rm -rf /home/$(whoami)/www/install/*/
+rm -rf /home/$(whoami)/www/install/index.php
 rm -rf /home/$(whoami)/www/config-dist.php
 rm -rf /home/$(whoami)/www/admin/config-dist.php    
 
