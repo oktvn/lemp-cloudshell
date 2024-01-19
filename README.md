@@ -1,4 +1,4 @@
-# LEMP + Opencart + phpMyAdmin for Google Cloud Shell
+# LEMP + Opencart + phpMyAdmin + MailCatcher for Google Cloud Shell
 Create a new OpenCart instance on Google Cloud Shell from scratch.
 
 ## What is this?
@@ -20,6 +20,15 @@ cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git 
 ```
 cd `mktemp -d`; git clone https://github.com/oktvn/lemp-opencart-cloudshell.git .; bash .customize_environment; bash install-oc.sh
 ```
+
+## What you get post-install
+
+* On port `8080` you get Opencart on `/`
+  * Pre-filled admin login details
+* On port `8080` you get phpMyAdmin on `/pma`
+  * Auto-login with mysql `root` user
+* On port `8888` you get MailCatcher
+* Opencart already pre-configured to use MailCatcher
 
 ## Notes
 
