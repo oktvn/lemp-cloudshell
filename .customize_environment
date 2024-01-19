@@ -1,5 +1,4 @@
 #!/bin/bash
-source /etc/environment
 
 # if run by root
 if [ "$EUID" -eq 0 ]; then
@@ -76,11 +75,11 @@ echo "Installing MailCatcher..."
 sudo gem install mailcatcher --no-document --force
 }&> /dev/null
 
-echo "Starting MailCatcher on :8888..."
+echo "Starting MailCatcher on https://8888-$WEB_HOST/..."
 {
 sudo killall mailcatcher
 mailcatcher --http-port=8888
-}
+}&> /dev/null
 
 echo "Restarting LEMP..."
 {
