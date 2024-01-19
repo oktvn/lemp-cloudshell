@@ -21,7 +21,7 @@ mv upload/* /home/$(whoami)/www/
 sed -i "s/'config_mail_engine', 'mail'/'config_mail_engine', 'smtp'/" /home/$(whoami)/www/install/opencart.sql
 sed -i "s/'config_mail_smtp_hostname', ''/'config_mail_smtp_hostname', '127.0.0.1'/" /home/$(whoami)/www/install/opencart.sql
 sed -i "s/'config_mail_smtp_port', '25'/'config_mail_smtp_port', '1025'/" /home/$(whoami)/www/install/opencart.sql
-
+sed -i "s/'config_seo_url', '0'/'config_seo_url', '1'/" /home/$(whoami)/www/install/opencart.sql
 
 php /home/$(whoami)/www/install/cli_install.php install --db_hostname localhost --db_username root --db_password newpass --db_database opencart --db_driver mysqli --db_port 3306 --username admin --password 1 --email youremail@example.com --http_server "https://8080-' . getenv('WEB_HOST') . '/"
 
