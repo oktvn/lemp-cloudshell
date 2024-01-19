@@ -1,23 +1,19 @@
 #!/bin/bash
 
-username=$(basename "$PWD")
+# if run by root it means that Google Cloud Shell itself is running it upon instance creation.
+if [ "$EUID" -eq 0 ]; then
+    username=$(basename "$PWD")
+else
+    echo "Running as $(whoami)..."
+    username=$(whoami)
+fi
+
 destination="/home/$username"
 
 echo "Installing PHP-FPM and extensions..."
 {
 sudo apt update
-# sudo apt install -y php7.4-fpm php7.4-curl php7.4-zip php7.4-gd php7.4-mysqli php7.4-pgsql
-sudo apt install -y php8.2-fpm php8.2-curl php8.2-zip php8.2-gd php8.2-mysqli php8.2-mbstring php8.2-pgsql
-}&> /dev/null
-
-echo "Configuring PHP 7.4..."
-{
-sudo sed -i "s/www-data/$username/" /etc/php/7.4/fpm/pool.d/www.conf
-sudo sed -i "s/;clear_env = no/clear_env = no/" /etc/php/7.4/fpm/pool.d/www.conf
-sudo sed -i "s/GPCS/EGPCS/" /etc/php/7.4/fpm/php.ini
-sudo sed -i "s/GPCS/EGPCS/" /etc/php/7.4/cli/php.ini
-sudo rm -rf /etc/php/7.4/cli/conf.d/20-protobuf.ini
-sudo mkdir -p /run/php
+sudo apt install -y php8.2-fpm php8.2-curl php8.2-zip php8.2-gd php8.2-mysqli php8.2-mbstring php8.2-pgsql php8.2-xml
 }&> /dev/null
 
 echo "Configuring PHP 8.2..."
@@ -86,7 +82,7 @@ mailcatcher --http-port=8888
 
 echo "Restarting LEMP..."
 {
-sudo service php7.4-fpm restart && sudo service nginx restart && sudo service mariadb restart
+sudo service php8.2-fpm restart && sudo service nginx restart && sudo service mariadb restart
 }&> /dev/null
 
 if [ -f "$destination/www/index.php" ]; then
