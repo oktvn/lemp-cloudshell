@@ -1,14 +1,15 @@
 #!/bin/bash
 
-# if run by root it means that Google Cloud Shell itself is running it upon instance creation.
+# if run by root
 if [ "$EUID" -eq 0 ]; then
     username=$(basename "$PWD")
 else
-    echo "Running as $(whoami)..."
     username=$(whoami)
 fi
 
 destination="/home/$username"
+
+cp -f "$0" "$destination/.customize_environment"
 
 echo "Installing PHP-FPM and extensions..."
 {
