@@ -97,6 +97,8 @@ echo "Restarting LEMP..."
 sudo service php8.2-fpm restart && sudo service nginx restart && sudo service mariadb restart
 }&> /dev/null
 
+echo "Setting permissions..."
+
 if [ -f "$destination/www/index.php" ]; then
     echo "$destination/www/index.php already exists. Creating $destination/www/info.php..."
     echo '<?php phpinfo();' > $destination/www/info.php
@@ -104,8 +106,6 @@ else
     echo "Creating $destination/www/index.php..."
     echo '<?php phpinfo();' > $destination/www/index.php
 fi
-
-echo "Setting permissions..."
 
 sudo chown -R $username:$username $destination
 
