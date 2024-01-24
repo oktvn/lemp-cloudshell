@@ -1,6 +1,8 @@
 #!/bin/bash
 source /etc/environment
 
+$conf="opencart"
+
 # if ran by root
 if [ "$EUID" -eq 0 ]; then
     username=$(basename "$PWD")
@@ -48,10 +50,10 @@ echo "Installing Nginx..."
 sudo apt install -y nginx 
 }&> /dev/null
 
-echo "Configuring Nginx..."
+echo "Configuring Nginx for $conf..."
 {
 cd `mktemp -d`
-wget https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/default.nginx.conf
+wget "https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/sites-enabled/$conf.nginx.conf"
 sudo cp ./default.nginx.conf /etc/nginx/sites-enabled/default
 sudo sed -i "s#root /var/www/html;#root $destination/www;#" /etc/nginx/sites-enabled/default
 sudo chown -R $username:$username /etc/nginx/sites-enabled/default
