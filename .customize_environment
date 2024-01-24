@@ -1,28 +1,46 @@
 #!/bin/bash
 source /etc/environment
 
-# if run by root
+# if ran by root
 if [ "$EUID" -eq 0 ]; then
     username=$(basename "$PWD")
 else
     username=$(whoami)
 fi
 
+if ! getent passwd "$username" > /dev/null; then
+    echo "User $username does not exist. Exiting script."
+    exit 1
+fi
+
 destination="/home/$username"
+
+if [ ! -d "$destination" ]; then
+    echo "Home directory $destination does not exist for user $username. Exiting script."
+    exit 1
+fi
 
 cp -f "$0" "$destination/.customize_environment"
 
 echo "Installing PHP-FPM and extensions..."
 {
 sudo apt update
-sudo apt install -y php8.2-fpm php8.2-curl php8.2-zip php8.2-gd php8.2-mysqli php8.2-mbstring php8.2-pgsql php8.2-xml
+sudo apt install -y php8.2-fpm php8.2-curl php8.2-zip php8.2-gd php8.2-mysqli php8.2-mbstring php8.2-pgsql php8.2-xml php8.2-bcmath php8.2-intl
 }&> /dev/null
 
 echo "Configuring PHP 8.2..."
 {
+sudo sed -i "s/memory_limit = 128M/memory_limit = -1/" /etc/php/8.2/fpm/php.ini
 sudo sed -i "s/www-data/$username/" /etc/php/8.2/fpm/pool.d/www.conf
 sudo rm -rf /etc/php/8.2/cli/conf.d/20-protobuf.ini
 sudo mkdir -p /run/php
+}&> /dev/null
+
+echo "Installing Composer..."
+{
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php
+php -r "unlink('composer-setup.php');"
 }&> /dev/null
 
 echo "Installing Nginx..."
@@ -36,6 +54,7 @@ cd `mktemp -d`
 wget https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/default.nginx.conf
 sudo cp ./default.nginx.conf /etc/nginx/sites-enabled/default
 sudo sed -i "s#root /var/www/html;#root $destination/www;#" /etc/nginx/sites-enabled/default
+sudo chown -R $username:$username /etc/nginx/sites-enabled/default
 sudo sed -i "s/user www-data;/user $username;/" /etc/nginx/nginx.conf
 mkdir -p $destination/www
 if [ ! -d "$destination/www" ]; then
@@ -66,17 +85,18 @@ if [ ! -d "$destination/mysql" ] || [ "$1" == "--first-run" ]; then
 else
     echo "MySQL datadir already exists in $destination. Leaving as-is."
 fi
+sudo sed -i 's/\[server\]/\[server\]\ndefault-time-zone=+00:00/' /etc/mysql/mariadb.conf.d/50-server.cnf
 sudo sed -i "s#/var/lib/mysql#$destination/mysql#" /etc/mysql/mariadb.conf.d/50-server.cnf
 sudo service mariadb start
 sudo mysqladmin -u root password 'newpass'
 }
 
-echo "Installing MailCatcher..."
+echo "Installing Mailpit..."
 {
-sudo gem install mailcatcher --no-document --force
+sudo bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
 }&> /dev/null
 
-echo "Configuring PHP for MailCatcher..."
+echo "Configuring PHP for Mailpit..."
 {
 sudo sed -i "s/smtp_port = 25/smtp_port = 1025/" /etc/php/8.2/fpm/php.ini
 sudo sed -i "s/;sendmail_path =/sendmail_path = $(which catchmail)/" /etc/php/8.2/fpm/php.ini
@@ -86,10 +106,19 @@ sudo sed -i "s/;sendmail_path =/sendmail_path = $(which catchmail)/" /etc/php/8.
 sudo sed -i "s#;sendmail_path =#sendmail_path = $(which catchmail)#" /etc/php/8.2/cli/php.ini
 }&> /dev/null
 
-echo "Starting MailCatcher on https://8888-$WEB_HOST/..."
+echo "Starting Mailpit on https://8888-$WEB_HOST/..."
 {
-sudo killall mailcatcher
-mailcatcher --http-port=8888
+sudo killall mailpit
+mailpit --listen="0.0.0.0:8888" &
+
+}&> /dev/null
+
+
+echo "Installing DDEV..." 
+{
+curl -fsSL https://pkg.ddev.com/apt/gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/ddev.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/trusted.gpg.d/ddev.gpg] https://pkg.ddev.com/apt/ * *" | sudo tee /etc/apt/sources.list.d/ddev.list
+sudo apt update --allow-releaseinfo-change && sudo apt install -y ddev
 }&> /dev/null
 
 echo "Restarting LEMP..."
