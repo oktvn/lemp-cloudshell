@@ -1,7 +1,6 @@
 #!/bin/bash
 source /etc/environment
-
-$conf="opencart"
+start_port=8080
 
 # if ran by root
 if [ "$EUID" -eq 0 ]; then
@@ -24,81 +23,37 @@ fi
 
 cp -f "$0" "$destination/.customize_environment"
 
-echo "Installing PHP-FPM and extensions..."
+clear
+
+echo "Installing Nginx, MariaDB, PHP-FPM, PHP Extensions, SSHPass..."
 {
-sudo apt update
-sudo apt install -y php8.2-fpm php8.2-curl php8.2-zip php8.2-gd php8.2-mysqli php8.2-mbstring php8.2-pgsql php8.2-xml php8.2-bcmath php8.2-intl
+    sudo apt update
+    sudo apt install -y php8.2-fpm php8.2-curl php8.2-zip php8.2-gd php8.2-mysqli php8.2-mbstring php8.2-pgsql php8.2-xml php8.2-bcmath php8.2-intl nginx sshpass mariadb-server
 }&> /dev/null
 
-echo "Configuring PHP 8.2..."
-{
-sudo sed -i "s/memory_limit = 128M/memory_limit = -1/" /etc/php/8.2/fpm/php.ini
-sudo sed -i "s/www-data/$username/" /etc/php/8.2/fpm/pool.d/www.conf
-sudo rm -rf /etc/php/8.2/cli/conf.d/20-protobuf.ini
-sudo mkdir -p /run/php
-}&> /dev/null
-
-echo "Installing Composer..."
-{
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
-}&> /dev/null
-
-echo "Installing Nginx..."
-{
-sudo apt install -y nginx 
-}&> /dev/null
-
-echo "Configuring Nginx for $conf..."
-{
-cd `mktemp -d`
-wget "https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/sites-enabled/$conf.nginx.conf"
-sudo cp ./default.nginx.conf /etc/nginx/sites-enabled/default
-sudo sed -i "s#root /var/www/html;#root $destination/www;#" /etc/nginx/sites-enabled/default
-sudo chown -R $username:$username /etc/nginx/sites-enabled/default
-sudo sed -i "s/user www-data;/user $username;/" /etc/nginx/nginx.conf
-mkdir -p $destination/www
-if [ ! -d "$destination/www" ]; then
-    cp -R /var/www/html/. "$destination"
-    echo "Copied contents from /var/www/html/ to $destination"
-else
-    echo "$destination already exists. Skipping copy."
-fi
-}&> /dev/null
-
-
-echo "Installing MariaDB..."
-{
-# We might need to remove some legacy packages
-# We might need to point the storage to the home folder
-sudo apt install -y mariadb-server
-}&> /dev/null
-
-echo "Configuring MariaDB..."
-{
-sudo service mariadb stop
-sudo mkdir -p /run/mysqld
-sudo chown mysql:mysql /run/mysqld/
-if [ ! -d "$destination/mysql" ] || [ "$1" == "--first-run" ]; then
-    mkdir -p $destination/mysql
-    sudo mysql_install_db --datadir=$destination/mysql
-    echo "Created new MySQL datadir in $destination"
-else
-    echo "MySQL datadir already exists in $destination. Leaving as-is."
-fi
-sudo sed -i 's/\[server\]/\[server\]\ndefault-time-zone=+00:00/' /etc/mysql/mariadb.conf.d/50-server.cnf
-sudo sed -i "s#/var/lib/mysql#$destination/mysql#" /etc/mysql/mariadb.conf.d/50-server.cnf
-sudo service mariadb start
-sudo mysqladmin -u root password 'newpass'
-}
 
 echo "Installing Mailpit..."
 {
 sudo bash < <(curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh)
 }&> /dev/null
 
-echo "Configuring PHP for Mailpit..."
+echo "Installing Composer..."
+{
+    cd `mktemp -d`
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+}&> /dev/null
+
+echo "Configuring PHP 8.2..."
+{
+    sudo sed -i "s/memory_limit = 128M/memory_limit = -1/" /etc/php/8.2/fpm/php.ini
+    sudo sed -i "s/www-data/$username/" /etc/php/8.2/fpm/pool.d/www.conf
+    sudo rm -rf /etc/php/8.2/cli/conf.d/20-protobuf.ini
+    sudo mkdir -p /run/php
+}&> /dev/null
+
+echo "Configuring PHP 8.2 for Mailpit..."
 {
 sudo sed -i "s/smtp_port = 25/smtp_port = 1025/" /etc/php/8.2/fpm/php.ini
 sudo sed -i "s/;sendmail_path =/sendmail_path = $(which catchmail)/" /etc/php/8.2/fpm/php.ini
@@ -108,38 +63,117 @@ sudo sed -i "s/;sendmail_path =/sendmail_path = $(which catchmail)/" /etc/php/8.
 sudo sed -i "s#;sendmail_path =#sendmail_path = $(which catchmail)#" /etc/php/8.2/cli/php.ini
 }&> /dev/null
 
-echo "Starting Mailpit on https://8888-$WEB_HOST/..."
+echo "Configuring Nginx..."
 {
-sudo killall mailpit
-mailpit --listen="0.0.0.0:8888" &
+    sudo sed -i "s/user www-data;/user $username;/" /etc/nginx/nginx.conf
+    sudo rm -rf /etc/nginx/sites-enabled/*
+}
 
+echo "Configuring Nginx for Craft..."
+{
+    find "$destination" -mindepth 2 -maxdepth 2 -type d -name "web" -exec sh -c '
+        project_dir=$(dirname "{}")
+        project_name=$(basename "$project_dir")
+        sudo wget -q --progress=bar:force -O /etc/nginx/sites-enabled/$project_name.site.conf "https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/sites-enabled/craft.nginx.conf"
+        sudo chown -R $username:$username /etc/nginx/sites-enabled/$project_name.site.conf
+        sudo sed -i "s|root [^;]\+;|root {};|" /etc/nginx/sites-enabled/$project_name.site.conf
+    ' \;
 }&> /dev/null
 
-
-echo "Installing DDEV..." 
+echo "Configuring Nginx for Opencart..."
 {
-curl -fsSL https://pkg.ddev.com/apt/gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/ddev.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/trusted.gpg.d/ddev.gpg] https://pkg.ddev.com/apt/ * *" | sudo tee /etc/apt/sources.list.d/ddev.list
-sudo apt update --allow-releaseinfo-change && sudo apt install -y ddev
+    find "$destination" -mindepth 2 -maxdepth 2 -type d -name "catalog" -exec sh -c '
+        project_dir=$(dirname "{}")
+        project_name=$(basename "$project_dir")
+        sudo wget -q --progress=bar:force -O /etc/nginx/sites-enabled/$project_name.site.conf "https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/sites-enabled/opencart.nginx.conf"
+        sudo chown -R $username:$username /etc/nginx/sites-enabled/$project_name.site.conf
+        sudo sed -i "s|root [^;]\+;|root {};|" /etc/nginx/sites-enabled/$project_name.site.conf
+    ' \;
+}&> /dev/null
+
+echo "Configuring Nginx for projects. Assigning port numbers to each site..."
+{
+    export start_port
+
+    find /etc/nginx/sites-enabled/ -type f -name "*.site.conf" -exec sh -c '
+
+        for conf_file do
+            source /etc/environment
+
+            # Increment the port number
+            let "port=start_port++"
+
+            echo "Configuration File: $conf_file"
+            echo "Assigned URL: https://$port-$WEB_HOST"
+            echo "-----------------------------"
+
+            # Replace port number in the configuration file
+            sudo sed -i "s|listen [0-9]\+|listen $port|g" "$conf_file"
+        done
+    ' _ {} +
+}
+
+echo "Configuring MariaDB..."
+{
+    sudo service mariadb stop
+    sudo mkdir -p /run/mysqld
+    sudo chown mysql:mysql /run/mysqld/
+    if [ ! -d "$destination/mysql" ] || [ "$1" == "--first-run" ]; then
+        mkdir -p $destination/mysql
+        sudo mysql_install_db --datadir=$destination/mysql
+        echo "Created new MySQL datadir in $destination"
+    else
+        echo "MySQL datadir already exists in $destination. Leaving as-is."
+    fi
+    sudo sed -i 's/\[server\]/\[server\]\ndefault-time-zone=+00:00/' /etc/mysql/mariadb.conf.d/50-server.cnf
+    sudo sed -i "s#/var/lib/mysql#$destination/mysql#" /etc/mysql/mariadb.conf.d/50-server.cnf
+    sudo chown -R mysql:mysql $destination/mysql
+    sudo service mariadb start
+    sudo mysqladmin -u root password 'newpass'
+    sudo mysql_upgrade -uroot -pnewpass --force
+}&> /dev/null
+
+echo "Downloading phpMyAdmin..."
+{
+    export username
+    cd `mktemp -d`
+    wget --no-check-certificate "https://files.phpmyadmin.net/phpMyAdmin/5.2.1/phpMyAdmin-5.2.1-english.zip"
+    unzip *
+    rm *.zip
+    sudo chown -R $username:$username /var/www/html/
+    rm -rf /var/www/html/*
+    mv */* /var/www/html
+    mv /var/www/html/config.sample.inc.php /var/www/html/config.inc.php
+    sed -i "s/'cookie'/'config'/" /var/www/html/config.inc.php
+    sed -i "s/'compress'] = false;/'user'] = 'root';/" /var/www/html/config.inc.php
+    sed -i "s/'AllowNoPassword'] = false;/'password'] = 'newpass';/" /var/www/html/config.inc.php
+}&> /dev/null
+
+echo "Configuring phpMyAdmin..."
+{
+    sudo wget -q --progress=bar:force -O /etc/nginx/sites-enabled/pma.conf "https://raw.githubusercontent.com/oktvn/lemp-opencart-cloudshell/main/sites-enabled/pma.nginx.conf"
+    sudo sed -i "s|listen [0-9]\+|listen 2000|g" "/etc/nginx/sites-enabled/pma.conf"
+    echo "phpMyAdmin URL: https://2000-$WEB_HOST/"
+}
+
+echo "Setting permissions..."
+{
+    sudo chown -R $username:$username $destination
+    sudo chown -R mysql:mysql $destination/mysql
+}
+
+echo "Starting Mailpit..."
+{
+    sudo killall mailpit
+    mailpit --listen="0.0.0.0:8888" &
+    echo "Mailpit URL: https://8888-$WEB_HOST/"
 }&> /dev/null
 
 echo "Restarting LEMP..."
 {
-sudo service php8.2-fpm restart && sudo service nginx restart && sudo service mariadb restart
-}&> /dev/null
-
-echo "Setting permissions..."
-
-if [ -f "$destination/www/index.php" ]; then
-    echo "$destination/www/index.php already exists. Creating $destination/www/info.php..."
-    echo '<?php phpinfo();' > $destination/www/info.php
-else
-    echo "Creating $destination/www/index.php..."
-    echo '<?php phpinfo();' > $destination/www/index.php
-fi
-
-sudo chown -R $username:$username $destination
-
-sudo chown -R mysql:mysql $destination/mysql
+    sudo service php8.2-fpm restart >/dev/null 2>&1 &&
+    sudo service nginx restart >/dev/null 2>&1 &&
+    sudo service mariadb restart >/dev/null 2>&1
+} || echo "Error: One or more services failed to restart."
 
 exit 0  # Exit with code 0 for success
