@@ -69,7 +69,7 @@ echo "Configuring Nginx..."
     sudo rm -rf /etc/nginx/sites-enabled/*
 }
 
-echo "Configuring Nginx for Craft..."
+echo "Configuring Nginx for Craft projects in $destination..."
 {
     find "$destination" -mindepth 2 -maxdepth 2 -type d -name "web" -exec sh -c '
         project_dir=$(dirname "{}")
@@ -80,14 +80,14 @@ echo "Configuring Nginx for Craft..."
     ' \;
 }&> /dev/null
 
-echo "Configuring Nginx for Opencart..."
+echo "Configuring Nginx for other PHP projects in $destination..."
 {
-    find "$destination" -mindepth 2 -maxdepth 2 -type d -name "catalog" -exec sh -c '
+    find "$destination" -mindepth 2 -maxdepth 2 -type f -name "index.php" -exec sh -c '
         project_dir=$(dirname "{}")
         project_name=$(basename "$project_dir")
-        sudo wget -q --progress=bar:force -O /etc/nginx/sites-enabled/$project_name.site.conf "https://raw.githubusercontent.com/oktvn/lemp-cloudshell/main/sites-enabled/opencart.nginx.conf"
+        sudo wget -q --progress=bar:force -O /etc/nginx/sites-enabled/$project_name.site.conf "https://raw.githubusercontent.com/oktvn/lemp-cloudshell/main/sites-enabled/default.nginx.conf"
         sudo chown -R $username:$username /etc/nginx/sites-enabled/$project_name.site.conf
-        sudo sed -i "s|root [^;]\+;|root {};|" /etc/nginx/sites-enabled/$project_name.site.conf
+        sudo sed -i "s|root [^;]\+;|root $project_dir;|" /etc/nginx/sites-enabled/$project_name.site.conf
     ' \;
 }&> /dev/null
 
@@ -131,6 +131,7 @@ echo "Configuring MariaDB..."
     sudo service mariadb start
     sudo mysqladmin -u root password 'newpass'
     sudo mysql_upgrade -uroot -pnewpass --force
+    echo -e "[client]\nuser=root\npassword=newpass" > $destination/.my.cnf
 }&> /dev/null
 
 echo "Downloading phpMyAdmin..."
