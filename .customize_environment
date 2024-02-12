@@ -113,6 +113,11 @@ echo "Configuring Nginx for projects. Assigning port numbers to each site..."
     ' _ {} +
 }
 
+echo "Setting conf files permissions to $username" 
+{
+    sudo chown -R $username:$username /etc/nginx/sites-enabled/
+}
+
 echo "Configuring MariaDB..."
 {
     sudo service mariadb stop
@@ -177,4 +182,4 @@ echo "Restarting LEMP..."
     sudo service mariadb restart >/dev/null 2>&1
 } || echo "Error: One or more services failed to restart."
 
-cd ~ && exit 0  # Exit with code 0 for success
+exit 0  # Exit with code 0 for success
