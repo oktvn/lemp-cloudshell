@@ -14,7 +14,12 @@ You can just copy paste the following one-liner commands to install it:
 cd `mktemp -d`; git clone https://github.com/oktvn/lemp-cloudshell.git .; bash .customize_environment
 ```
 
+Run the installation script on demand from your home directory:
+```
+bash .customize_environment
+```
+
 ## Notes
 
-* As long as you don't delete the `.customize_environment` file in your home directory, you don't have to re-run the first initialization script yourself again.
+* As long as you don't delete the `.customize_environment` file in your home directory, you don't have to re-run the first initialization script yourself on the next boot of the Cloud Shell instance.
 * Recommended for development work only. Please don't use the conf files on any live environment of any kind. 
