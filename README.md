@@ -9,10 +9,7 @@ The `.customize_environment` file is the centerpiece here, and it's essentially 
 
 ## Usage
 
-You can just copy paste the following one-liner commands to either:
-
-* Install a clean LEMP stack without any applications in the `www` root:
-
+You can just copy paste the following one-liner commands to install it:
 ```
 cd `mktemp -d`; git clone https://github.com/oktvn/lemp-cloudshell.git .; bash .customize_environment
 ```
