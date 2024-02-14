@@ -14,7 +14,7 @@ You can just copy paste the following one-liner commands to install it:
 cd `mktemp -d`; git clone https://github.com/oktvn/lemp-cloudshell.git .; bash .customize_environment
 ```
 
-Run the installation script on demand from your home directory:
+(Optional) Run the installation script on demand from your home directory:
 ```
 bash .customize_environment
 ```
